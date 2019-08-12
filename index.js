@@ -53,7 +53,6 @@ class ReactionHandler {
     const regex = /<@([^>]+)>/g
     let matched
     while ((matched = regex.exec(text)) !== null) {
-      console.log(matched)
       result.push(matched[1])
     }
 

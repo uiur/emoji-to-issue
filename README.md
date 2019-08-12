@@ -42,10 +42,27 @@ This emoji generator is useful: https://emoji-gen.ninja/
 
 ### write some code
 
-Write handler in your slack bot code.
+Following api tokens are required:
+
+- `SLACK_TOKEN`
+  - slack bot token
+- `SLACK_USER_TOKEN`
+  - this is because channels.history api needs slack user token, not bot token
+  - https://api.slack.com/custom-integrations/legacy-tokens
+- `GITHUB_TOKEN`
+
+Set those tokens via environment variables or pass it to the arguments.
 
 ```js
 const { ReactionHandler } = require('emoji-to-issue')
+
+handler = new ReactionHandler({
+  issueRepo: 'hello-ai/sandbox', // required
+  reactionName: ['bug'], // default: 'issue', 'issue-assign_:assignee' etc.
+  slackToken: 'bot token', // default: process.env.SLACK_TOKEN
+  slackUserToken: 'user token', // default: process.env.SLACK_USER_TOKEN
+  githubToken: 'github token' // default: process.env.GITHUB_TOKEN
+})
 
 // event = {
 //   type: 'reaction_added',
@@ -55,14 +72,6 @@ const { ReactionHandler } = require('emoji-to-issue')
 //   item_user: 'UB9T3UXU0',
 //   event_ts: '1565583513.004000'
 // }
-
-handler = new ReactionHandler({
-  issueRepo: 'hello-ai/sandbox', // required
-  reactionName: ['bug'], // default: 'issue', 'issue-assign_:assignee' etc.
-  slackToken: 'bot token', // default: process.env.SLACK_TOKEN
-  slackUserToken: 'user token', // default: process.env.SLACK_USER_TOKEN
-  githubToken: 'github token' // default: process.env.GITHUB_TOKEN
-})
 
 if (handler.match(event)) {
   handler
