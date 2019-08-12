@@ -73,8 +73,7 @@ class SlackClient {
     })
 
     if (!res.data.ok) {
-      console.error(res.data)
-      throw new Error(JSON.stringify(res.data))
+      return null
     }
 
     return res.data.user

@@ -46,10 +46,12 @@ Following api tokens are required:
 
 - `SLACK_TOKEN`
   - slack bot token
+  - Bot User OAuth Access Token `https://api.slack.com/apps/~~/install-on-team`
 - `SLACK_USER_TOKEN`
   - this is because channels.history api needs slack user token, not bot token
   - https://api.slack.com/custom-integrations/legacy-tokens
 - `GITHUB_TOKEN`
+  - https://github.com/settings/tokens
 
 Set those tokens via environment variables or pass it to the arguments.
 

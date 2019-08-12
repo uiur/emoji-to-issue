@@ -62,7 +62,11 @@ class ReactionHandler {
   expandSlackUser(text, users) {
     return text.replace(/<@([^>]+)>/g, (match, user) => {
       const info = users[user]
-      return `@${info.profile.display_name}`
+      if (info) {
+        return `@${info.profile.display_name}`
+      } else {
+        return `@${user}`
+      }
     })
   }
 
@@ -97,6 +101,7 @@ class ReactionHandler {
 
     const users = {}
     userInfos.forEach(info => {
+      if (!info) return
       users[info.id] = info
     })
 
@@ -110,9 +115,10 @@ class ReactionHandler {
       .filter(m => m.type === 'message' && m.subtype !== 'bot_message')
       .map(m => {
         const info = users[m.user]
+        const username = info ? info.profile.display_name : m.user
         const decoded = decode(m.text)
         const expanded = this.expandSlackUser(decoded, users)
-        return `${info.profile.display_name}: ${expanded}`
+        return `${username}: ${expanded}`
       })
       .join('\n')
 
