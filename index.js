@@ -60,7 +60,7 @@ class ReactionHandler {
     const title = decode(message.text)
     const historyText = messages
       .reverse()
-      .filter(m => m.type === 'message')
+      .filter(m => m.type === 'message' && m.subtype !== 'bot_message')
       .map(m => decode(m.text))
       .join('\n')
 
