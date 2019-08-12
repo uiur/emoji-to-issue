@@ -4,13 +4,13 @@ const decode = require('decode-html')
 function apiHeaders(token) {
   return {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+    Authorization: `Bearer ${token}`
   }
 }
 
 // channels.history api needs slack user token, not bot token
 // https://api.slack.com/custom-integrations/legacy-tokens
-async function getMessages (channel, ts, count = 1) {
+async function getMessages(channel, ts, count = 1) {
   const token = process.env.SLACK_USER_TOKEN
 
   const res = await axios.get('https://slack.com/api/channels.history', {
@@ -36,19 +36,23 @@ async function getMessages (channel, ts, count = 1) {
   return res.data
 }
 
-async function postMessage (channel, text) {
+async function postMessage(channel, text) {
   const token = process.env.SLACK_TOKEN
 
-  await axios.post('https://slack.com/api/chat.postMessage', {
-    channel: channel,
-    text: text,
-    icon_emoji: ':chicken:'
-  }, {
-    headers: apiHeaders(token)
-  })
+  await axios.post(
+    'https://slack.com/api/chat.postMessage',
+    {
+      channel: channel,
+      text: text,
+      icon_emoji: ':chicken:'
+    },
+    {
+      headers: apiHeaders(token)
+    }
+  )
 }
 
-async function getPermalink (channel, ts) {
+async function getPermalink(channel, ts) {
   const res = await axios.get('https://slack.com/api/chat.getPermalink', {
     params: {
       channel: channel,
@@ -63,14 +67,18 @@ async function getPermalink (channel, ts) {
 function githubApiHeaders() {
   return {
     ...apiHeaders(process.env.GITHUB_TOKEN),
-    'Accept': 'application/vnd.github.v3+json'
+    Accept: 'application/vnd.github.v3+json'
   }
 }
 
 async function createIssue(repo, params) {
-  const res = await axios.post(`https://api.github.com/repos/${repo}/issues`, params, {
-    headers: githubApiHeaders()
-  })
+  const res = await axios.post(
+    `https://api.github.com/repos/${repo}/issues`,
+    params,
+    {
+      headers: githubApiHeaders()
+    }
+  )
 
   if (res.status > 300) {
     console.error(res.data)
@@ -106,19 +114,19 @@ class ReactionHandler {
   //   slackUserToken: process.env.SLACK_USER_TOKEN,
   //   githubToken: process.env.GITHUB_TOKEN
   // })
-  constructor (params) {
+  constructor(params) {
     this.params = params
     this.issueRepo = params.issueRepo
   }
 
   // @return {boolean}
-  match (event) {
+  match(event) {
     return event.type === 'reaction_added' && event.reaction === 'イシュー'
   }
 
   // create an issue from a slack reaction event
   // @return {Promise}
-  async handle (event) {
+  async handle(event) {
     if (!this.match(event)) return
 
     const issueRepo = this.issueRepo
@@ -130,15 +138,16 @@ class ReactionHandler {
     const permalink = await getPermalink(channel, message.ts)
 
     const title = decode(message.text)
-    const historyText = messages.reverse()
+    const historyText = messages
+      .reverse()
       .filter(m => m.type === 'message')
       .map(m => decode(m.text))
-      .join("\n")
+      .join('\n')
 
     const body = `${permalink}\n` + '```\n' + historyText + '\n```'
 
     const issues = await getLatestIssues(issueRepo)
-    const foundIssue = issues.find((issue) => {
+    const foundIssue = issues.find(issue => {
       return issue.title === title
     })
 
