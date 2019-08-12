@@ -39,14 +39,12 @@ class SlackClient {
     return res.data
   }
 
-  // TODO: icon_emoji
   async postMessage(channel, text) {
     await axios.post(
       'https://slack.com/api/chat.postMessage',
       {
         channel: channel,
-        text: text,
-        icon_emoji: ':chicken:'
+        text: text
       },
       {
         headers: this.apiHeaders(this.token)
