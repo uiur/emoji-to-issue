@@ -29,23 +29,26 @@ class ReactionHandler {
 
   // @return {boolean}
   match(event) {
-    return (
-      event.type === 'reaction_added' &&
-      this.reactionNames().includes(event.reaction)
-    )
+    if (event.type !== 'reaction_added') return false
+    if (this.reactionNames().includes(event.reaction)) return true
+
+    const matched = this.reactionNames().some(name => {
+      return new RegExp(`^${name}-assign-.+$`).test(event.reaction)
+    })
+
+    return matched
+  }
+
+  extractAssignee(reactionName) {
+    const matchData = reactionName.match(/-assign-(.+)$/)
+    matchData && matchData[1]
   }
 
   reactionNames() {
     return this.reactionName || ['issue', 'イシュー']
   }
 
-  // create an issue from a slack reaction event
-  // @return {Promise}
-  async handle(event) {
-    if (!this.match(event)) return
-
-    const issueRepo = this.issueRepo
-
+  async buildIssueContent(event) {
     const slackClient = new SlackClient(this.slackToken, this.slackUserToken)
 
     const { channel, ts } = event.item
@@ -63,15 +66,38 @@ class ReactionHandler {
 
     const body = `${permalink}\n` + '```\n' + historyText + '\n```'
 
+    return {
+      title: title,
+      body: body
+    }
+  }
+
+  // create an issue from a slack reaction event
+  // @return {Promise}
+  async handle(event) {
+    if (!this.match(event)) return
+
+    const { title, body } = await this.buildIssueContent(event)
     const githubClient = new GithubClient(this.githubToken)
 
+    const issueRepo = this.issueRepo
     const issues = await githubClient.getLatestIssues(issueRepo)
     const foundIssue = issues.find(issue => {
       return issue.title === title
     })
 
     if (foundIssue) {
-      return
+      return foundIssue
+    }
+
+    const issueParams = {
+      title: title,
+      body: body
+    }
+
+    const assignee = this.extractAssignee(event.reaction)
+    if (assignee) {
+      issueParams.assignees = [assignee]
     }
 
     const issue = await githubClient.createIssue(issueRepo, {
@@ -79,8 +105,11 @@ class ReactionHandler {
       body: body
     })
 
+    const slackClient = new SlackClient(this.slackToken, this.slackUserToken)
     const slackMessage = `<@${event.user}> ${issue.html_url}`
     await slackClient.postMessage(channel, slackMessage)
+
+    return issue
   }
 }
 
