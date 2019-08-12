@@ -63,6 +63,22 @@ class SlackClient {
 
     return res.data.permalink
   }
+
+  async getUserInfo(user) {
+    const res = await axios.get('https://slack.com/api/users.info', {
+      params: {
+        user: user,
+        token: this.token
+      }
+    })
+
+    if (!res.data.ok) {
+      console.error(res.data)
+      throw new Error(JSON.stringify(res.data))
+    }
+
+    return res.data.user
+  }
 }
 
 module.exports = SlackClient

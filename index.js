@@ -48,11 +48,59 @@ class ReactionHandler {
     return this.reactionName || ['issue', 'イシュー']
   }
 
+  extractSlackUsersFromText(text) {
+    const result = []
+    const regex = /<@([^>]+)>/g
+    let matched
+    while ((matched = regex.exec(text)) !== null) {
+      console.log(matched)
+      result.push(matched[1])
+    }
+
+    return result
+  }
+
+  expandSlackUser(text, users) {
+    return text.replace(/<@([^>]+)>/g, (match, user) => {
+      const info = users[user]
+      return `@${info.profile.display_name}`
+    })
+  }
+
+  extractSlackUsersFromMessages(messages) {
+    const users = {}
+    messages
+      .filter(m => m.user)
+      .forEach(m => {
+        users[m.user] = null
+      })
+
+    messages.forEach(m => {
+      this.extractSlackUsersFromText(m.text).forEach(u => {
+        users[u] = null
+      })
+    })
+
+    return Object.keys(users)
+  }
+
   async buildIssueContent(event) {
     const slackClient = new SlackClient(this.slackToken, this.slackUserToken)
 
     const { channel, ts } = event.item
     const { messages } = await slackClient.getMessages(channel, ts, 10)
+
+    const slackUsers = this.extractSlackUsersFromMessages(messages)
+
+    const userInfos = await Promise.all(
+      slackUsers.map(m => slackClient.getUserInfo(m.user))
+    )
+
+    const users = {}
+    userInfos.forEach(info => {
+      users[info.id] = info
+    })
+
     debug(messages)
     const message = messages[0]
     const permalink = await slackClient.getPermalink(channel, message.ts)
@@ -61,7 +109,12 @@ class ReactionHandler {
     const historyText = messages
       .reverse()
       .filter(m => m.type === 'message' && m.subtype !== 'bot_message')
-      .map(m => decode(m.text))
+      .map(m => {
+        const info = users[m.user]
+        const decoded = decode(m.text)
+        const expanded = this.expandSlackUser(decoded, users)
+        return `${info.profile.display_name}: ${expanded}`
+      })
       .join('\n')
 
     const body = `${permalink}\n` + '```\n' + historyText + '\n```'

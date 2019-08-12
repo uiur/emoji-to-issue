@@ -20,7 +20,7 @@ test('handler.match()', t => {
 })
 
 test('handler.buildIssueContent()', async t => {
-  const scope = nock('https://slack.com')
+  nock('https://slack.com')
     .get(/^\/api\/channels.history/)
     .reply(200, {
       ok: true,
@@ -36,7 +36,7 @@ test('handler.buildIssueContent()', async t => {
         {
           client_msg_id: '642017a7-3157-49e9-b194-97493c28e91e',
           type: 'message',
-          text: 'user desu',
+          text: '<@UB9T3UXU0> user desu',
           user: 'UB9T3UXU0',
           ts: '1565581381.003500',
           team: 'T0ZFQ4P32'
@@ -58,6 +58,22 @@ test('handler.buildIssueContent()', async t => {
       ok: true,
       channel: 'CGU971U2F',
       permalink: 'https://hello-ai.slack.com/foo/bar'
+    })
+
+  nock('https://slack.com')
+    .get(/^\/api\/users\.info/)
+    .reply(200, {
+      ok: true,
+      user: {
+        id: 'UB9T3UXU0',
+        team_id: 'T0ZFQ4P32',
+        real_name: 'Kazato Sugimoto',
+        profile: {
+          title: '',
+          display_name: 'kazato',
+          display_name_normalized: 'kazato'
+        }
+      }
     })
 
   const event = {

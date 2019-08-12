@@ -4,7 +4,7 @@
   "description": "the fastest way to create github issues with slack emoji reactions",
   "main": "index.js",
   "scripts": {
-    "test": "DEBUG=1 ava"
+    "test": "ava"
   },
   "author": "",
   "license": "ISC",
