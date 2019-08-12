@@ -65,6 +65,10 @@ class SlackClient {
   }
 
   async getUserInfo(user) {
+    if (!user) {
+      throw new Error('user is null')
+    }
+
     const res = await axios.get('https://slack.com/api/users.info', {
       params: {
         user: user,

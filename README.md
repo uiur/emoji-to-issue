@@ -22,7 +22,7 @@ In your `package.json`:
 
 ```js
 "dependencies": {
-  "emoji-to-issue": "uiur/emoji-to-issue",
+  "emoji-to-issue": "uiur/emoji-to-issue#master",
 ```
 
 Then:

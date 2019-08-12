@@ -96,7 +96,7 @@ class ReactionHandler {
     const slackUsers = this.extractSlackUsersFromMessages(messages)
 
     const userInfos = await Promise.all(
-      slackUsers.map(m => slackClient.getUserInfo(m.user))
+      slackUsers.map(user => slackClient.getUserInfo(user))
     )
 
     const users = {}
