@@ -18,6 +18,32 @@ Then, the issue is made:
 
 ## setup
 
+In your `package.json`:
+
+```js
+"dependencies": {
+  "emoji-to-issue": "uiur/emoji-to-issue",
+```
+
+Then:
+
+```
+npm install
+```
+
+### configure slack emoji
+
+https://slack.com/customize/emoji
+
+Add custom emoji with names such as `:issue:` or `:issue-assign-uiur:`.
+Use alias if you want short one like: `:uiu: -> :issue-assign-uiur:`
+
+This emoji generator is useful: https://emoji-gen.ninja/
+
+### write some code
+
+Write handler in your slack bot code.
+
 ```js
 const { ReactionHandler } = require('emoji-to-issue')
 
@@ -32,10 +58,10 @@ const { ReactionHandler } = require('emoji-to-issue')
 
 handler = new ReactionHandler({
   issueRepo: 'hello-ai/sandbox', // required
-  reactionName: ['bug'], // default: ['issue', 'issue-assign_:assignee']
-  slackToken: process.env.SLACK_TOKEN,
-  slackUserToken: process.env.SLACK_USER_TOKEN,
-  githubToken: process.env.GITHUB_TOKEN
+  reactionName: ['bug'], // default: 'issue', 'issue-assign_:assignee' etc.
+  slackToken: 'bot token', // default: process.env.SLACK_TOKEN
+  slackUserToken: 'user token', // default: process.env.SLACK_USER_TOKEN
+  githubToken: 'github token' // default: process.env.GITHUB_TOKEN
 })
 
 if (handler.match(event)) {

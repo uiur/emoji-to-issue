@@ -49,7 +49,7 @@ class SlackClient {
         icon_emoji: ':chicken:'
       },
       {
-        headers: apiHeaders(this.token)
+        headers: this.apiHeaders(this.token)
       }
     )
   }

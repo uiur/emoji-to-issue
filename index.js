@@ -12,7 +12,7 @@ class ReactionHandler {
   // @param {Object} params
   // @example
   // handler = new ReactionHandler({
-  //   reactionName: ['issue'],  // default: ['issue', 'issue-assign_:assignee']
+  //   reactionName: ['issue'],  // default: ['issue', 'issue-assign-:assignee']
   //   issueRepo: 'hello-ai/sandbox',
   //   slackToken: process.env.SLACK_TOKEN,
   //   slackUserToken: process.env.SLACK_USER_TOKEN,
@@ -41,7 +41,7 @@ class ReactionHandler {
 
   extractAssignee(reactionName) {
     const matchData = reactionName.match(/-assign-(.+)$/)
-    matchData && matchData[1]
+    return matchData && matchData[1]
   }
 
   reactionNames() {
@@ -75,6 +75,7 @@ class ReactionHandler {
   // create an issue from a slack reaction event
   // @return {Promise}
   async handle(event) {
+    debug(event)
     if (!this.match(event)) return
 
     const { title, body } = await this.buildIssueContent(event)
@@ -100,11 +101,10 @@ class ReactionHandler {
       issueParams.assignees = [assignee]
     }
 
-    const issue = await githubClient.createIssue(issueRepo, {
-      title: title,
-      body: body
-    })
+    debug(issueParams)
+    const issue = await githubClient.createIssue(issueRepo, issueParams)
 
+    const { channel } = event.item
     const slackClient = new SlackClient(this.slackToken, this.slackUserToken)
     const slackMessage = `<@${event.user}> ${issue.html_url}`
     await slackClient.postMessage(channel, slackMessage)
