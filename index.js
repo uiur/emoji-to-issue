@@ -1,107 +1,11 @@
-const axios = require('axios')
 const decode = require('decode-html')
+const GithubClient = require('./github-client')
+const SlackClient = require('./slack-client')
 
-function apiHeaders(token) {
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`
+function debug(message) {
+  if (process.env.DEBUG) {
+    console.log(message)
   }
-}
-
-// channels.history api needs slack user token, not bot token
-// https://api.slack.com/custom-integrations/legacy-tokens
-async function getMessages(channel, ts, count = 1) {
-  const token = process.env.SLACK_USER_TOKEN
-
-  const res = await axios.get('https://slack.com/api/channels.history', {
-    params: {
-      channel: channel,
-      latest: ts,
-      count: count,
-      inclusive: true,
-      token: token
-    }
-  })
-
-  if (res.status > 300) {
-    console.error(res.data)
-    throw new Error(res.data.message)
-  }
-
-  if (!res.data.ok) {
-    console.error(res.data)
-    throw new Error(JSON.stringify(res.data))
-  }
-
-  return res.data
-}
-
-async function postMessage(channel, text) {
-  const token = process.env.SLACK_TOKEN
-
-  await axios.post(
-    'https://slack.com/api/chat.postMessage',
-    {
-      channel: channel,
-      text: text,
-      icon_emoji: ':chicken:'
-    },
-    {
-      headers: apiHeaders(token)
-    }
-  )
-}
-
-async function getPermalink(channel, ts) {
-  const res = await axios.get('https://slack.com/api/chat.getPermalink', {
-    params: {
-      channel: channel,
-      message_ts: ts,
-      token: process.env.SLACK_TOKEN
-    }
-  })
-
-  return res.data.permalink
-}
-
-function githubApiHeaders() {
-  return {
-    ...apiHeaders(process.env.GITHUB_TOKEN),
-    Accept: 'application/vnd.github.v3+json'
-  }
-}
-
-async function createIssue(repo, params) {
-  const res = await axios.post(
-    `https://api.github.com/repos/${repo}/issues`,
-    params,
-    {
-      headers: githubApiHeaders()
-    }
-  )
-
-  if (res.status > 300) {
-    console.error(res.data)
-    throw new Error(res.data.message)
-  }
-
-  return res.data
-}
-
-async function getLatestIssues(repo) {
-  const res = await axios.get(`https://api.github.com/repos/${repo}/issues`, {
-    params: {
-      state: 'all'
-    },
-    headers: githubApiHeaders()
-  })
-
-  if (res.status > 300) {
-    console.error(res.data)
-    throw new Error(res.data.message)
-  }
-
-  return res.data
 }
 
 class ReactionHandler {
@@ -117,11 +21,22 @@ class ReactionHandler {
   constructor(params) {
     this.params = params
     this.issueRepo = params.issueRepo
+    this.reactionName = params.reactionName
+    this.slackToken = params.slackToken || process.env.SLACK_TOKEN
+    this.slackUserToken = params.slackUserToken || process.env.SLACK_USER_TOKEN
+    this.githubToken = params.githubToken || process.env.GITHUB_TOKEN
   }
 
   // @return {boolean}
   match(event) {
-    return event.type === 'reaction_added' && event.reaction === 'イシュー'
+    return (
+      event.type === 'reaction_added' &&
+      this.reactionNames().includes(event.reaction)
+    )
+  }
+
+  reactionNames() {
+    return this.reactionName || ['issue', 'イシュー']
   }
 
   // create an issue from a slack reaction event
@@ -131,11 +46,13 @@ class ReactionHandler {
 
     const issueRepo = this.issueRepo
 
+    const slackClient = new SlackClient(this.slackToken, this.slackUserToken)
+
     const { channel, ts } = event.item
-    const { messages } = await getMessages(channel, ts, 10)
-    console.log(messages)
+    const { messages } = await slackClient.getMessages(channel, ts, 10)
+    debug(messages)
     const message = messages[0]
-    const permalink = await getPermalink(channel, message.ts)
+    const permalink = await slackClient.getPermalink(channel, message.ts)
 
     const title = decode(message.text)
     const historyText = messages
@@ -146,7 +63,9 @@ class ReactionHandler {
 
     const body = `${permalink}\n` + '```\n' + historyText + '\n```'
 
-    const issues = await getLatestIssues(issueRepo)
+    const githubClient = new GithubClient(this.githubToken)
+
+    const issues = await githubClient.getLatestIssues(issueRepo)
     const foundIssue = issues.find(issue => {
       return issue.title === title
     })
@@ -155,10 +74,13 @@ class ReactionHandler {
       return
     }
 
-    const issue = await createIssue(issueRepo, { title: title, body: body })
+    const issue = await githubClient.createIssue(issueRepo, {
+      title: title,
+      body: body
+    })
 
     const slackMessage = `<@${event.user}> ${issue.html_url}`
-    await postMessage(channel, slackMessage)
+    await slackClient.postMessage(channel, slackMessage)
   }
 }
 
