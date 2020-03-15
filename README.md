@@ -48,6 +48,7 @@ Following api tokens are required:
   - slack bot token
   - Bot User OAuth Access Token `https://api.slack.com/apps/~~/install-on-team`
   - Enable Events and add subscription to `reaction added` events https://api.slack.com/apps/:app/event-subscriptions
+  - Permissions: `channels:history` `users:read` https://api.slack.com/apps/:app/oauth
 - `SLACK_USER_TOKEN`
   - this is because channels.history api needs slack user token, not bot token
   - https://api.slack.com/custom-integrations/legacy-tokens
