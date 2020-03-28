@@ -124,7 +124,11 @@ class ReactionHandler {
     const historyText = messages
       .reverse()
       .filter(
-        m => m.type === 'message' && m.subtype !== 'bot_message' && m.text
+        m =>
+          m.type === 'message' &&
+          m.subtype !== 'bot_message' &&
+          m.bot_id === undefined &&
+          m.text
       )
       .map(m => {
         const info = users[m.user]
