@@ -59,15 +59,26 @@ class ReactionHandler {
     return result
   }
 
-  expandSlackUser(text, users) {
-    return text.replace(/<@([^>]+)>/g, (match, user) => {
-      const info = users[user]
-      if (info) {
-        return `@${info.profile.display_name}`
-      } else {
-        return `@${user}`
+  removeSlackFormatting(text, users) {
+    return text.replace(
+      /<([@#!])?([^>|]+)(?:\|([^>]+))?>/g,
+      (match, type, link, label) => {
+        if (type === '@') {
+          const info = users[link]
+          if (info) {
+            return `@${info.profile.display_name}`
+          } else {
+            return `@${link}`
+          }
+        }
+
+        if (type === '#') {
+          return `#${label || link}`
+        }
+
+        return label || link
       }
-    })
+    )
   }
 
   extractSlackUsersFromMessages(messages) {
@@ -109,7 +120,7 @@ class ReactionHandler {
     const message = messages[0]
     const permalink = await slackClient.getPermalink(channel, message.ts)
 
-    const title = decode(message.text)
+    const title = this.removeSlackFormatting(decode(message.text), users)
     const historyText = messages
       .reverse()
       .filter(m => m.type === 'message' && m.subtype !== 'bot_message')
@@ -117,7 +128,7 @@ class ReactionHandler {
         const info = users[m.user]
         const username = info ? info.profile.display_name : m.user
         const decoded = decode(m.text)
-        const expanded = this.expandSlackUser(decoded, users)
+        const expanded = this.removeSlackFormatting(decoded, users)
         return `${username}: ${expanded}`
       })
       .join('\n')
