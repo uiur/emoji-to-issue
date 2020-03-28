@@ -123,7 +123,9 @@ class ReactionHandler {
     const title = this.removeSlackFormatting(decode(message.text), users)
     const historyText = messages
       .reverse()
-      .filter(m => m.type === 'message' && m.subtype !== 'bot_message')
+      .filter(
+        m => m.type === 'message' && m.subtype !== 'bot_message' && m.text
+      )
       .map(m => {
         const info = users[m.user]
         const username = info ? info.profile.display_name : m.user
