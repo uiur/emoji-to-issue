@@ -1,10 +1,42 @@
 const test = require('ava')
 const nock = require('nock')
+const uuidv4 = require('uuid').v4
 
 const { ReactionHandler } = require('./')
 
-test('handler.match()', t => {
-  const event = {
+function mockSlackHistory(messages) {
+  nock('https://slack.com')
+    .get(/^\/api\/channels.history/)
+    .reply(200, {
+      ok: true,
+      messages
+    })
+}
+
+function slackMessage(text) {
+  return {
+    client_msg_id: uuidv4(),
+    type: 'message',
+    text: text,
+    user: 'UB9T3UXU0',
+    ts: Date.now() / 1000,
+    team: 'T0ZFQ4P32'
+  }
+}
+
+function slackBotMessage(text) {
+  return {
+    type: 'message',
+    subtype: 'bot_message',
+    text: text,
+    ts: Date.now() / 1000,
+    username: 'otochan-dev',
+    bot_id: 'BMB12D06B'
+  }
+}
+
+function slackReactionAddedEvent() {
+  return {
     type: 'reaction_added',
     user: 'UB9T3UXU0',
     item: { type: 'message', channel: 'CGU971U2F', ts: '1565583510.003900' },
@@ -12,6 +44,10 @@ test('handler.match()', t => {
     item_user: 'UB9T3UXU0',
     event_ts: '1565583513.004000'
   }
+}
+
+test('handler.match()', t => {
+  const event = slackReactionAddedEvent()
 
   const handler = new ReactionHandler({ issueRepo: 'hello-ai/sandbox' })
   t.true(handler.match(event))
@@ -19,39 +55,7 @@ test('handler.match()', t => {
   t.false(handler.match({ ...event, reaction: 'innocent' }))
 })
 
-test('handler.buildIssueContent()', async t => {
-  nock('https://slack.com')
-    .get(/^\/api\/channels.history/)
-    .reply(200, {
-      ok: true,
-      messages: [
-        {
-          client_msg_id: '21e4c02f-0802-4981-a518-a9eb49da9876',
-          type: 'message',
-          text: 'issue title test',
-          user: 'UB9T3UXU0',
-          ts: '1565583510.003900',
-          team: 'T0ZFQ4P32'
-        },
-        {
-          client_msg_id: '642017a7-3157-49e9-b194-97493c28e91e',
-          type: 'message',
-          text: '<@UB9T3UXU0> user desu',
-          user: 'UB9T3UXU0',
-          ts: '1565581381.003500',
-          team: 'T0ZFQ4P32'
-        },
-        {
-          type: 'message',
-          subtype: 'bot_message',
-          text: 'bot desu',
-          ts: '1565581085.003300',
-          username: 'otochan-dev',
-          bot_id: 'BMB12D06B'
-        }
-      ]
-    })
-
+test.beforeEach(() => {
   nock('https://slack.com')
     .get(/^\/api\/chat.getPermalink/)
     .reply(200, {
@@ -59,6 +63,14 @@ test('handler.buildIssueContent()', async t => {
       channel: 'CGU971U2F',
       permalink: 'https://hello-ai.slack.com/foo/bar'
     })
+})
+
+test('handler.buildIssueContent()', async t => {
+  mockSlackHistory([
+    slackMessage('issue title test'),
+    slackMessage('<@UB9T3UXU0> user desu'),
+    slackBotMessage('bot desu')
+  ])
 
   nock('https://slack.com')
     .get(/^\/api\/users\.info/)
@@ -76,14 +88,7 @@ test('handler.buildIssueContent()', async t => {
       }
     })
 
-  const event = {
-    type: 'reaction_added',
-    user: 'UB9T3UXU0',
-    item: { type: 'message', channel: 'CGU971U2F', ts: '1565583510.003900' },
-    reaction: 'issue',
-    item_user: 'UB9T3UXU0',
-    event_ts: '1565583513.004000'
-  }
+  const event = slackReactionAddedEvent()
 
   const handler = new ReactionHandler({ issueRepo: 'hello-ai/sandbox' })
   const { title, body } = await handler.buildIssueContent(event)
@@ -95,29 +100,7 @@ test('handler.buildIssueContent()', async t => {
 })
 
 test('buildIssueContent: user not found', async t => {
-  nock('https://slack.com')
-    .get(/^\/api\/channels.history/)
-    .reply(200, {
-      ok: true,
-      messages: [
-        {
-          client_msg_id: '21e4c02f-0802-4981-a518-a9eb49da9876',
-          type: 'message',
-          text: '<@UB9T3UXU0> test',
-          user: 'UB9T3UXU0',
-          ts: '1565583510.003900',
-          team: 'T0ZFQ4P32'
-        }
-      ]
-    })
-
-  nock('https://slack.com')
-    .get(/^\/api\/chat.getPermalink/)
-    .reply(200, {
-      ok: true,
-      channel: 'CGU971U2F',
-      permalink: 'https://hello-ai.slack.com/foo/bar'
-    })
+  mockSlackHistory([slackMessage('<@UB9T3UXU0> test')])
 
   nock('https://slack.com')
     .get(/^\/api\/users\.info/)
@@ -126,12 +109,7 @@ test('buildIssueContent: user not found', async t => {
       error: 'user_not_found'
     })
 
-  const event = {
-    type: 'reaction_added',
-    user: 'UB9T3UXU0',
-    item: { type: 'message', channel: 'CGU971U2F', ts: '1565583510.003900' },
-    reaction: 'issue'
-  }
+  const event = slackReactionAddedEvent()
 
   const handler = new ReactionHandler({ issueRepo: 'hello-ai/sandbox' })
   const { title, body } = await handler.buildIssueContent(event)
@@ -143,29 +121,9 @@ test('buildIssueContent: user not found', async t => {
 })
 
 test('buildIssueContent: subteam', async t => {
-  nock('https://slack.com')
-    .get(/^\/api\/channels.history/)
-    .reply(200, {
-      ok: true,
-      messages: [
-        {
-          client_msg_id: '21e4c02f-0802-4981-a518-a9eb49da9876',
-          type: 'message',
-          text: '<!subteam^SK0PHATT3|@hackers> test <http://example.com>',
-          user: 'UB9T3UXU0',
-          ts: '1565583510.003900',
-          team: 'T0ZFQ4P32'
-        }
-      ]
-    })
-
-  nock('https://slack.com')
-    .get(/^\/api\/chat.getPermalink/)
-    .reply(200, {
-      ok: true,
-      channel: 'CGU971U2F',
-      permalink: 'https://hello-ai.slack.com/foo/bar'
-    })
+  mockSlackHistory([
+    slackMessage('<!subteam^SK0PHATT3|@hackers> test <http://example.com>')
+  ])
 
   nock('https://slack.com')
     .get(/^\/api\/users\.info/)
@@ -174,12 +132,7 @@ test('buildIssueContent: subteam', async t => {
       error: 'user_not_found'
     })
 
-  const event = {
-    type: 'reaction_added',
-    user: 'UB9T3UXU0',
-    item: { type: 'message', channel: 'CGU971U2F', ts: '1565583510.003900' },
-    reaction: 'issue'
-  }
+  const event = slackReactionAddedEvent()
 
   const handler = new ReactionHandler({ issueRepo: 'hello-ai/sandbox' })
   const { title, body } = await handler.buildIssueContent(event)
