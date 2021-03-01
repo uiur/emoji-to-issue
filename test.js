@@ -6,7 +6,7 @@ const { ReactionHandler } = require('./')
 
 function mockSlackHistory(messages) {
   nock('https://slack.com')
-    .get(/^\/api\/channels.history/)
+    .get(/^\/api\/conversations.history/)
     .reply(200, {
       ok: true,
       messages

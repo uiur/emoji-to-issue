@@ -1,9 +1,8 @@
 const axios = require('axios')
 
 class SlackClient {
-  constructor(token, userToken) {
+  constructor(token) {
     this.token = token || process.env.SLACK_TOKEN
-    this.userToken = userToken || process.env.SLACK_USER_TOKEN
   }
 
   apiHeaders(token) {
@@ -13,16 +12,14 @@ class SlackClient {
     }
   }
 
-  // channels.history api needs slack user token, not bot token
-  // https://api.slack.com/custom-integrations/legacy-tokens
   async getMessages(channel, ts, count = 1) {
-    const res = await axios.get('https://slack.com/api/channels.history', {
+    const res = await axios.get('https://slack.com/api/conversations.history', {
       params: {
         channel: channel,
         latest: ts,
-        count: count,
+        limit: count,
         inclusive: true,
-        token: this.userToken
+        token: this.token
       }
     })
 

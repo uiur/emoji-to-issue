@@ -15,7 +15,6 @@ class ReactionHandler {
   //   reactionName: ['issue'],  // default: ['issue', 'issue-assign-:assignee']
   //   issueRepo: 'hello-ai/sandbox',
   //   slackToken: process.env.SLACK_TOKEN,
-  //   slackUserToken: process.env.SLACK_USER_TOKEN,
   //   githubToken: process.env.GITHUB_TOKEN
   // })
   constructor(params) {
@@ -23,7 +22,6 @@ class ReactionHandler {
     this.issueRepo = params.issueRepo
     this.reactionName = params.reactionName
     this.slackToken = params.slackToken || process.env.SLACK_TOKEN
-    this.slackUserToken = params.slackUserToken || process.env.SLACK_USER_TOKEN
     this.githubToken = params.githubToken || process.env.GITHUB_TOKEN
   }
 
