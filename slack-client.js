@@ -1,9 +1,8 @@
 const axios = require('axios')
 
 class SlackClient {
-  constructor(token, userToken) {
+  constructor(token) {
     this.token = token || process.env.SLACK_TOKEN
-    this.userToken = userToken || process.env.SLACK_USER_TOKEN
   }
 
   apiHeaders(token) {
