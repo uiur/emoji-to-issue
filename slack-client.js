@@ -18,9 +18,9 @@ class SlackClient {
         channel: channel,
         latest: ts,
         limit: count,
-        inclusive: true,
-        token: this.token
-      }
+        inclusive: true
+      },
+      headers: this.apiHeaders(this.token)
     })
 
     if (res.status > 300) {
