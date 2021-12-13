@@ -97,7 +97,7 @@ class ReactionHandler {
   }
 
   async buildIssueContent(event) {
-    const slackClient = new SlackClient(this.slackToken, this.slackUserToken)
+    const slackClient = new SlackClient(this.slackToken)
 
     const { channel, ts } = event.item
     const { messages } = await slackClient.getMessages(channel, ts, 10)
@@ -178,7 +178,7 @@ class ReactionHandler {
     const issue = await githubClient.createIssue(issueRepo, issueParams)
 
     const { channel } = event.item
-    const slackClient = new SlackClient(this.slackToken, this.slackUserToken)
+    const slackClient = new SlackClient(this.slackToken)
     const slackMessage = `<@${event.user}> ${issue.html_url}`
     await slackClient.postMessage(channel, slackMessage)
 
