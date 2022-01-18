@@ -4,7 +4,7 @@ The fastest way to create GitHub issues on your phone.
 
 Add emoji reactions to messages on Slack and it creates an GitHub issue for you.
 
-If you don't make it an isssue, you'll forget it. Don't miss problems of your product.
+If you don't make it an issue, you'll forget it. Don't miss problems of your product.
 This module helps you to accelerate product development process, especially when you're dog-fooding.
 
 ## usage
