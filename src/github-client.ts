@@ -1,6 +1,8 @@
-const axios = require('axios')
+import axios from 'axios'
 
-class GithubClient {
+export default class GithubClient {
+  token: string
+
   constructor(token) {
     this.token = token || process.env.GITHUB_TOKEN
   }
@@ -46,5 +48,3 @@ class GithubClient {
     return res.data
   }
 }
-
-module.exports = GithubClient

@@ -1,6 +1,7 @@
-const axios = require('axios')
+import axios from 'axios'
 
-class SlackClient {
+export default class SlackClient {
+  token: string
   constructor(token) {
     this.token = token || process.env.SLACK_TOKEN
   }
@@ -80,5 +81,3 @@ class SlackClient {
     return res.data.user
   }
 }
-
-module.exports = SlackClient
