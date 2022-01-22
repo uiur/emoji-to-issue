@@ -2,7 +2,7 @@ const test = require('ava')
 const nock = require('nock')
 const uuidv4 = require('uuid').v4
 
-const { ReactionHandler } = require('./')
+const { ReactionHandler } = require('./dist')
 
 function mockSlackHistory(messages) {
   nock('https://slack.com')

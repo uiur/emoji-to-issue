@@ -1,6 +1,6 @@
-const decode = require('decode-html')
-const GithubClient = require('./github-client')
-const SlackClient = require('./slack-client')
+import decode = require('decode-html')
+import GithubClient from './github-client'
+import SlackClient from './slack-client'
 
 function debug(message) {
   if (process.env.DEBUG) {
@@ -8,7 +8,7 @@ function debug(message) {
   }
 }
 
-class ReactionHandler {
+export class ReactionHandler {
   // @param {Object} params
   // @example
   // handler = new ReactionHandler({
@@ -17,16 +17,25 @@ class ReactionHandler {
   //   slackToken: process.env.SLACK_TOKEN,
   //   githubToken: process.env.GITHUB_TOKEN
   // })
-  constructor(params) {
-    this.params = params
+
+  issueRepo: string
+  reactionName: string[] | null
+  slackToken: string
+  githubToken: string
+
+  constructor(params: {
+    issueRepo: string
+    reactionName?: string[]
+    githubToken?: string
+    slackToken?: string
+  }) {
     this.issueRepo = params.issueRepo
-    this.reactionName = params.reactionName
+    this.reactionName = params.reactionName || null
     this.slackToken = params.slackToken || process.env.SLACK_TOKEN
     this.githubToken = params.githubToken || process.env.GITHUB_TOKEN
   }
 
-  // @return {boolean}
-  match(event) {
+  match(event): boolean {
     if (event.type !== 'reaction_added') return false
     if (this.reactionNames().includes(event.reaction)) return true
 
@@ -146,7 +155,6 @@ class ReactionHandler {
   }
 
   // create an issue from a slack reaction event
-  // @return {Promise}
   async handle(event) {
     debug(event)
     if (!this.match(event)) return
@@ -164,7 +172,7 @@ class ReactionHandler {
       return foundIssue
     }
 
-    const issueParams = {
+    const issueParams: any = {
       title: title,
       body: body
     }
@@ -185,5 +193,3 @@ class ReactionHandler {
     return issue
   }
 }
-
-exports.ReactionHandler = ReactionHandler
