@@ -1,6 +1,6 @@
 {
   "name": "emoji-to-issue",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "the fastest way to create github issues with slack emoji reactions",
   "main": "dist/index.js",
   "scripts": {
