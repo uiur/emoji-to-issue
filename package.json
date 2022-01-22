@@ -14,9 +14,10 @@
     "decode-html": "^2.0.0"
   },
   "devDependencies": {
+    "@types/node": "^17.0.10",
     "@types/prettier": "^1.19.1",
     "@types/uuid": "^7.0.5",
-    "ava": "^2.2.0",
+    "ava": "^4.0.1",
     "husky": "^3.0.3",
     "nock": "^10.0.6",
     "prettier": "^1.18.2",
